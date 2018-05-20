@@ -29,16 +29,14 @@ const eventKeys = {
 
 class TradesController extends Emitter {
 
-	constructor( { GdaxAuthed, pollingInterval = 10000, debug } ) {
+	constructor( { GdaxAuthed, pollingInterval = 10000 } ) {
 		super();
 
 		this.GdaxAuthed = GdaxAuthed;
 		this.orders = [];
-		this.market = null;
 		this.orderPoll = null;
 		this.ordersFetching = false;
 		this.pollingInterval = pollingInterval;
-		this.debug = debug;
 
 		bindAll( this, [
 			'fetchOrders',
@@ -46,7 +44,6 @@ class TradesController extends Emitter {
 			'fetchMultipleOrdersByIds',
 			'checkOrders',
 			'syncOrders',
-			'stopPollingOrders',
 			'startPollingOrders',
 			'maybeEmitSettled',
 			'maybeEmitOrderChanges',
@@ -55,7 +52,6 @@ class TradesController extends Emitter {
 		// ======
 
 		this.on( 'start', this.startPollingOrders );
-		this.on( 'pause', this.stopPollingOrders );
 
 		// ======
 
@@ -63,24 +59,8 @@ class TradesController extends Emitter {
 		this.checkOrders();
 	}
 
-
-
-	stopPollingOrders() {
-		this.orderPoll && clearInterval( this.orderPoll );
-	}
-
 	startPollingOrders() {
-		this.stopPollingOrders();
 		this.orderPoll = setInterval( this.checkOrders, this.pollingInterval );
-	}
-
-	// need to handle trades so that we don't suddenly seem to have many 'missing' trades
-	setMarket( market ) {
-
-		// const existingOrdersForMarket = filter( this.orders, order => order.product_id ===
-
-		// this.market = market;
-		// 'BCH-BTC'
 	}
 
 	fetchOrders() {
@@ -92,7 +72,7 @@ class TradesController extends Emitter {
 					},
 					( error, response, data ) => error ? reject( error ) : resolve( data )
 				)
-		).catch( x => console.log( 'fetchOrders', x ) )
+		)
 	}
 
 	fetchOrderById( id ) {

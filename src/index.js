@@ -27,13 +27,11 @@ tradesController.on(
 	TradesController.eventKeys.ORDERS_SETTLED,
 	( { orders = [] } ) => {
 		const markets = uniq( map( orders, 'product_id' ) );
-		const link = 'https://www.gdax.com/trade/' + markets[ 0 ] || '';
 
 		notifier.notify( {
 			title: `${ orders.length } ${ orders.length > 1 ? 'orders' : 'order' } filled!`,
 			message: `In: ${ markets.join( ', ' ) }`,
 			sound: 'Purr',
-			open: link,
 		} );
 	}
 );
