@@ -146,7 +146,7 @@ class TradesController extends Emitter {
 
 			this.orders = orders;
 
-			// For now I've added a cap of 10 orders to fetch individually.
+			// For now I've added a cap of 5 orders to fetch individually.
 			// There are one or two errors that should be handled before lifting this cap
 			// To avoid repeatedly spamming the API...
 			if ( ! isEmpty( missingOrderIds ) && missingOrderIds.length <= 5 ) {
