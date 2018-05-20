@@ -9,7 +9,7 @@ const { NotificationCenter } = require( 'node-notifier' );
  * Internal dependencies
  */
 const config = require( '../__c' );
-const TradesController = require( './libtrades' );
+const TradesController = require( './lib/trades' );
 const printOrderChanges = require( './lib/print-order-changes' );
 
 const GdaxAuthed = new GdaxAPI.AuthenticatedClient(
