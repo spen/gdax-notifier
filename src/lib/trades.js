@@ -101,7 +101,7 @@ class TradesController extends Emitter {
 	}
 
 	fetchMultipleOrdersByIds( ids ) {
-	  return Promise.all( map( ids, this.fetchOrderById ) );
+		return Promise.all( map( ids, this.fetchOrderById ) );
 	}
 
 	checkOrders() {

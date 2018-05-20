@@ -1,8 +1,7 @@
 /**
  * External dependencies
  */
-const chalk = require( 'chalk' );
-const { red, yellow, green } = chalk;
+const { red, yellow, green } = require( 'chalk' );
 
 module.exports = function( orderGroups = {} ) {
 	const {
