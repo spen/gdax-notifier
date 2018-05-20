@@ -6,7 +6,9 @@ When it sees a trade that's been filled it'll notify you via the Notification Ce
 <img width="348" alt="order-filled" src="https://user-images.githubusercontent.com/4335450/40278658-4a5aaf56-5c2d-11e8-8cd2-6af8b2848ff3.png">
 
 
-It's also aware of other changes to your trades (additions, cancellations, part-fills) and will print a summary of those changes in the terminal.
+It's also aware of other changes to your trades (additions, cancellations, part-fills) and will print a summary of those changes in the terminal:
+
+<img width="213" alt="order-changes" src="https://user-images.githubusercontent.com/4335450/40278747-d01aac94-5c2e-11e8-8837-105dd6a6b1cb.png">
 
 ### Getting Started
 
