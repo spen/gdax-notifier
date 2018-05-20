@@ -1,0 +1,15 @@
+{
+  "name": "gdax-notifier",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "gdax": "^0.7.0",
+    "lodash": "^4.17.10",
+    "node-notifier": "^5.2.1"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}
