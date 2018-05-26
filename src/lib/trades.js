@@ -43,10 +43,11 @@ class TradesController extends Emitter {
 			'fetchOrderById',
 			'fetchMultipleOrdersByIds',
 			'checkOrders',
-			'syncOrders',
+			'groupOrders',
 			'startPollingOrders',
 			'maybeEmitSettled',
 			'maybeEmitOrderChanges',
+			'maybeSyncMissingOrders',
 		] );
 
 		// ======
@@ -106,10 +107,11 @@ class TradesController extends Emitter {
 
 	checkOrders() {
 		return this.fetchOrders()
-			.then( this.syncOrders )
+			.then( this.groupOrders )
+			.then( this.maybeSyncMissingOrders )
 			.then( this.maybeEmitSettled )
 			.then( this.maybeEmitOrderChanges )
-			.catch( logAll )
+			.catch( logAll );
 	}
 
 	maybeEmitSettled( orderGroups = {} ) {
@@ -133,51 +135,59 @@ class TradesController extends Emitter {
 		return orderGroups;
 	}
 
-	syncOrders( orders = [] ) {
-	 	return new Promise( ( resolve, reject ) => {
-			const currentIds = map( this.orders, 'id' );
-			const incomingIds = map( orders, 'id' );
-			const missingOrderIds = difference( currentIds, incomingIds );
-			const newOrders = filter( orders, order => ! includes( currentIds, order.id ) );
-			const matchedOrders = filter( orders, order => includes( currentIds, order.id ) );
-			// Not super sophisticated, this will only ping once.
-			// To be more accurate we'd need to compare filled size.
-			const partFilledOrders = filter( newOrders, isOrderPartFilled );
+	maybeSyncMissingOrders( orderGroups ) {
+		const { missingOrders } = orderGroups;
 
-			this.orders = orders;
+		if ( isEmpty( missingOrders ) ) {
+			return orderGroups;
+		}
 
-			// For now I've added a cap of 5 orders to fetch individually.
-			// There are one or two errors that should be handled before lifting this cap
-			// To avoid repeatedly spamming the API...
-			if ( ! isEmpty( missingOrderIds ) && missingOrderIds.length <= 5 ) {
-				console.log( `Fetching ${ missingOrderIds.length } individually...` );
-				return this.fetchMultipleOrdersByIds( missingOrderIds )
-					.then( missingOrders => {
-						const cancelledOrders = filter( missingOrders, isOrderCancelled );
-						const settledOrders = filter( missingOrders, isOrderSettled );
+		const missingOrderIds = map( missingOrders, 'id' );
 
-						resolve( {
-							cancelledOrders,
-							settledOrders,
-							newOrders,
-							matchedOrders,
-							partFilledOrders
-						} );
-					} );
-			}
+		// For now I've added a cap of 10 orders to fetch individually.
+		// There are one or two errors that should be handled before lifting this cap
+		// To avoid repeatedly spamming the API...
+		if ( missingOrders.length >= 10 ) {
+			console.log( `Skipping fetching ${ missingOrderIds.length } individually.` );
+			return omit( orderGroups, 'missingOrders' );
+		}
 
-			missingOrderIds.length >= 5 && (
-				console.log( `Skipped fetching ${ missingOrderIds.length } individual orders` )
+		console.log( `Fetching ${ missingOrderIds.length } individually...` );
+
+		return this.fetchMultipleOrdersByIds( missingOrderIds )
+			.then(
+				missingOrders => ( {
+					...orderGroups,
+					cancelledOrders: filter( missingOrders, isOrderCancelled ),
+					settledOrders: filter( missingOrders, isOrderSettled ),
+				} )
 			);
+	}
 
-			resolve( {
-				cancelledOrders: [],
-				settledOrders: [],
-				newOrders,
-				matchedOrders,
-				partFilledOrders,
-			} );
-		} );
+	groupOrders( orders = [] ) {
+		const currentIds = map( this.orders, 'id' );
+		const incomingIds = map( orders, 'id' );
+		const missingOrderIds = difference( currentIds, incomingIds );
+		const newOrders = filter( orders, order => ! includes( currentIds, order.id ) );
+		const matchedOrders = filter( orders, order => includes( currentIds, order.id ) );
+		const missingOrders = filter( this.orders, order => ! includes( incomingIds, order.id ) );
+		// Not super sophisticated, this will only ping once.
+		// To be more accurate we'd need to compare filled size.
+		// TODO: this will only see part-fills on new orders... fix that.
+		const partFilledOrders = filter( newOrders, isOrderPartFilled );
+
+		// TODO: This isn't the place for saving the orders
+		this.orders = orders;
+
+		return {
+			// Maybe pass the orders along like so?
+			// existingOrders: this.orders,
+			// incomingOrders: orders,
+			missingOrders,
+			newOrders,
+			matchedOrders,
+			partFilledOrders,
+		};
 	}
 }
 
