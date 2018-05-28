@@ -13,14 +13,40 @@ const {
 	toNumber,
 	some,
 	omit,
+	ceil,
+	floor,
+	inRange,
 } = require( 'lodash' );
+
+const { MARKET_DETAILS } = require( '../constants/markets' );
 
 const logAll = console.log.bind( console );
 const IS_CANCELLED_STATUS = 'isCancelled';
+const BUY_SIDE = 'buy';
+const SELL_SIDE = 'sell';
+const REJECTED_STATUS = 'rejected';
+
+const getMarketParam = ( market, param, defaultValue ) => get( MARKET_DETAILS, [ market, param ], defaultValue );
+const getPriceDecimalsForMarket = market => getMarketParam( market, 'DECIMAL_PRICE', 2 );
+const getSizeDecimalsForMarket = market => getMarketParam( market, 'DECIMAL_SIZE', 2 );
 
 const isOrderCancelled = order => get( order, 'status' ) === IS_CANCELLED_STATUS;
 const isOrderSettled = order => get( order, 'settled', false );
 const isOrderPartFilled = order => toNumber( get( order, 'filled_size', 0 ) ) > 0;
+const isOrderBuySide = order => get( order, 'side' ) === BUY_SIDE;
+const isOrderSellSide = order => get( order, 'side' ) === SELL_SIDE;
+
+const isValidOrder = ( { product_id: market, price, size } ) => {
+	const minSize = getMarketParam( market, 'MINIMUM_SIZE' );
+	const maxSize = getMarketParam( market, 'MAXIMUM_SIZE' );
+	const sizeIsValid = (
+		inRange( size, minSize, maxSize ) &&
+		size === floor( size, getSizeDecimalsForMarket( market ) )
+	);
+	const priceIsValid = price === floor( price, getPriceDecimalsForMarket( market ) );
+
+	return priceIsValid && sizeIsValid;
+}
 
 const eventKeys = {
 	ORDERS_SETTLED: 'ORDERS_SETTLED',
@@ -29,7 +55,12 @@ const eventKeys = {
 
 class TradesController extends Emitter {
 
-	constructor( { GdaxAuthed, pollingInterval = 10000 } ) {
+	constructor( {
+		GdaxAuthed,
+		pollingInterval = 10000,
+		riseMultiplier = 1.01,
+		dropMultiplier = 0.98,
+	} ) {
 		super();
 
 		this.GdaxAuthed = GdaxAuthed;
@@ -37,6 +68,8 @@ class TradesController extends Emitter {
 		this.orderPoll = null;
 		this.ordersFetching = false;
 		this.pollingInterval = pollingInterval;
+		this.riseMultiplier = riseMultiplier;
+		this.dropMultiplier = dropMultiplier;
 
 		bindAll( this, [
 			'fetchOrders',
@@ -188,6 +221,76 @@ class TradesController extends Emitter {
 			matchedOrders,
 			partFilledOrders,
 		};
+	}
+
+	flipOrder( order ) {
+		const {
+			price: settledPrice,
+			side: settledSide,
+			size: settledSize,
+			product_id: market,
+		} = order;
+
+		if ( ! settledSide || ! settledSize || ! market  ) {
+			return;
+		}
+
+		const settledPriceFloat = toNumber( settledPrice );
+		const settledSizeFloat = toNumber( settledSize );
+
+		if ( isOrderBuySide( order ) ) {
+			const targetPrice = ceil( settledPriceFloat * dropMultiplier, getPriceDecimalsForMarket( market ) );
+			const orderParams = {
+				product_id: market,
+				price: targetPrice,
+				size: settledSizeFloat,
+				post_only: true,
+			};
+
+			return isValidOrder( orderParams ) && this.sell( orderParams );
+		}
+
+		if ( isOrderSellSide( order ) ) {
+			const newPrice = ceil( settledPriceFloat * this.dropMultiplier, getPriceDecimalsForMarket( market ) );
+			const newSize = floor( ( settledPriceFloat / newPrice ) * settledSizeFloat, getSizeDecimalsForMarket( market ) );
+			const orderParams = {
+				product_id: market,
+				price: newPrice,
+				size: newSize,
+				post_only: true,
+			};
+
+			return isValidOrder( orderParams ) && this.buy( orderParams );
+		}
+	}
+
+	sell( params ) {
+	    return new Promise( ( resolve, reject ) => {
+			this.GdaxAuthed.sell( params, ( error, response, data ) => {
+				if ( error ) {
+					reject( error );
+				} else if ( data.status === REJECTED_STATUS ) {
+					reject( new Error( 'Sell order rejected at price:', price ) );
+				} else {
+					resolve( data );
+				}
+			} );
+		} );
+	}
+
+	buy( params ) {
+	    return new Promise(
+	    	( resolve, reject ) => {
+			this.GdaxAuthed.buy( params, ( error, response, data ) => {
+				if ( error ) {
+					reject( error );
+				} else if ( data.status === REJECTED_STATUS ) {
+					reject( new Error( 'Buy order rejected at price:', price ) );
+				} else {
+					resolve( data );
+				}
+		    } );
+	    } );
 	}
 }
 

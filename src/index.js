@@ -2,7 +2,7 @@
  * External dependencies
  */
 const GdaxAPI = require( 'gdax' );
-const { map, uniq } = require( 'lodash' );
+const { first, map, uniq } = require( 'lodash' );
 const { NotificationCenter } = require( 'node-notifier' );
 
 /**
@@ -23,6 +23,8 @@ const tradesController = new TradesController( {
 	GdaxAuthed,
 } );
 
+const FLIP_ACTION_LABEL = 'Flip Trade';
+
 tradesController.on(
 	TradesController.eventKeys.ORDERS_SETTLED,
 	( { orders = [] } ) => {
@@ -32,6 +34,15 @@ tradesController.on(
 			title: `${ orders.length } ${ orders.length > 1 ? 'orders' : 'order' } filled!`,
 			message: `In: ${ markets.join( ', ' ) }`,
 			sound: 'Purr',
+			closeLabel: 'ignore',
+			actions: [ FLIP_ACTION_LABEL ],
+		}, ( err, response, { activationValue } ) => {
+			if ( activationValue === FLIP_ACTION_LABEL ) {
+				// Unsure on how best to handle multiple orders... flip all? open a notif for each one?
+				// For now lets just flip the first one as there'll usually only ever be one to flip.
+				const firstOrder = first( orders );
+				tradesController.flipOrder( firstOrder );
+			}
 		} );
 	}
 );
