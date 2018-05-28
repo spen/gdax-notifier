@@ -1,0 +1,100 @@
+const LTC_BTC = 'LTC-BTC';
+const ETH_BTC = 'ETH-BTC';
+const ETH_EUR = 'ETH-EUR';
+const BCH_BTC = 'BCH-BTC';
+const BCH_EUR = 'BCH-EUR';
+const LTC_EUR = 'LTC-EUR';
+const BTC_EUR = 'BTC-EUR';
+
+const LTC = 'LTC';
+const ETH = 'ETH';
+const BCH = 'BCH';
+const BTC = 'BTC';
+const EUR = 'EUR';
+
+module.exports = {
+
+	LTC,
+	ETH,
+	BCH,
+	BTC,
+	EUR,
+
+	MARKET_TYPES: {
+		LTC: {
+			BTC: LTC_BTC,
+			EUR: LTC_EUR,
+		},
+		BTC: {
+			LTC: LTC_BTC,
+			ETH: ETH_BTC,
+			EUR: BTC_EUR,
+		},
+		ETH: {
+			BTC: ETH_BTC,
+			EUR: ETH_EUR,
+		},
+		BCH: {
+			BTC: BCH_BTC,
+			EUR: BCH_EUR,
+		}
+	},
+	MARKET_DETAILS: {
+		[ BCH_BTC ]: {
+			DECIMAL_PRICE: 5,
+			DECIMAL_SIZE: 2,
+			DEFAULT_SIZE: 0.01,
+			DEFAULT_PRICE: 0.01,
+			MINIMUM_SIZE: 0.01,
+			MAXIMUM_SIZE: 200,
+		},
+		[ BCH_EUR ]: {
+			DECIMAL_PRICE: 2,
+			DECIMAL_SIZE: 5,
+			DEFAULT_SIZE: 0.01,
+			DEFAULT_PRICE: 0.01,
+			MINIMUM_SIZE: 0.01,
+			MAXIMUM_SIZE: 120,
+		},
+		[ BTC_EUR ]: {
+			DECIMAL_PRICE: 2,
+			DECIMAL_SIZE: 8,
+			DEFAULT_SIZE: 0.001,
+			DEFAULT_PRICE: 0.005,
+			MINIMUM_SIZE: 0.001,
+			MAXIMUM_SIZE: 50,
+		},
+		[ ETH_BTC ]: {
+			DECIMAL_PRICE: 5,
+			DECIMAL_SIZE: 8,
+			DEFAULT_SIZE: 0.01,
+			DEFAULT_PRICE: 0.01,
+			MINIMUM_SIZE: 0.01,
+			MAXIMUM_SIZE: 600,
+		},
+		[ ETH_EUR ]: {
+			DECIMAL_PRICE: 2,
+			DECIMAL_SIZE: 8,
+			DEFAULT_SIZE: 0.01,
+			DEFAULT_PRICE: 0.01,
+			MINIMUM_SIZE: 0.01,
+			MAXIMUM_SIZE: 400,
+		},
+		[ LTC_BTC ]: {
+			DECIMAL_PRICE: 5,
+			DECIMAL_SIZE: 5,
+			DEFAULT_SIZE: 0.1,
+			DEFAULT_PRICE: 0.005,
+			MINIMUM_SIZE: 0.1,
+			MAXIMUM_SIZE: 2000,
+		},
+		[ LTC_EUR ]: {
+			DECIMAL_PRICE: 2,
+			DECIMAL_SIZE: 8,
+			DEFAULT_SIZE: 0.01,
+			DEFAULT_PRICE: 1,
+			MINIMUM_SIZE: 0.1,
+			MAXIMUM_SIZE: 1000,
+		},
+	},
+};
