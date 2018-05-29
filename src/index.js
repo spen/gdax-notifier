@@ -35,6 +35,7 @@ tradesController.on(
 			message: `In: ${ markets.join( ', ' ) }`,
 			sound: 'Purr',
 			closeLabel: 'ignore',
+			open: 'https://www.gdax.com/trade/' + ( markets.length === 1 ? first( markets ) : '' ),
 			actions: [ FLIP_ACTION_LABEL ],
 		}, ( err, response, { activationValue } ) => {
 			if ( activationValue === FLIP_ACTION_LABEL ) {
