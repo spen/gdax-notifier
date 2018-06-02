@@ -227,7 +227,7 @@ class TradesController extends Emitter {
 		const {
 			price: settledPrice,
 			side: settledSide,
-			size: settledSize,
+			filled_size: settledSize,
 			product_id: market,
 		} = order;
 
